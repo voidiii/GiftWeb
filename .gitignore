@@ -1,0 +1,48 @@
+# Firebase Configuration (IMPORTANT: Keep your API keys private!)
+# Uncomment the line below if you want to keep your Firebase config private
+# firebase-config.js
+
+# System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.sublime-project
+.sublime-workspace
+
+# Log Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary Files
+*.tmp
+*.temp
+.cache/
+
+# Node modules (if you add any build tools later)
+node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Build Output (if you add a build process later)
+dist/
+build/
+
+# Optional: Icon generator HTML (not needed in production)
+generate-icons.html
+
+# Optional: Documentation (if you don't want to share on GitHub)
+# FIREBASE-SETUP.md
+# SETUP.md
+# README.md
