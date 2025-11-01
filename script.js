@@ -34,7 +34,6 @@ function loadGifts() {
     showLoading();
 
     db.collection('gifts')
-        .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
             console.log('Real-time update received! Total gifts:', snapshot.size);
             container.innerHTML = '';
@@ -45,8 +44,21 @@ function loadGifts() {
                 return;
             }
 
+            // Convert to array and sort by createdAt
+            const gifts = [];
             snapshot.forEach((doc) => {
-                const gift = { id: doc.id, ...doc.data() };
+                gifts.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Sort by createdAt (newest first)
+            gifts.sort((a, b) => {
+                const timeA = a.createdAt?.toMillis() || 0;
+                const timeB = b.createdAt?.toMillis() || 0;
+                return timeB - timeA;
+            });
+
+            // Render sorted gifts
+            gifts.forEach(gift => {
                 const card = createCard(gift);
                 container.appendChild(card);
             });
