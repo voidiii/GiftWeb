@@ -167,12 +167,24 @@ async function openModal(giftId) {
         const gift = { id: doc.id, ...doc.data() };
         currentGiftId = giftId;
         modalImage.src = gift.imageUrl;
+
+        // Set title and description
+        const modalTitle = document.getElementById('modalTitle');
+        modalTitle.textContent = gift.description;
         modalDescription.textContent = gift.description;
 
-        renderComments(gift.comments || []);
+        // Render comments and update count
+        const comments = gift.comments || [];
+        renderComments(comments);
+        document.getElementById('commentCount').textContent = `(${comments.length})`;
 
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
+
+        // Reset comment input and button state
+        commentInput.value = '';
+        updateCommentButtonState();
+
         hideLoading();
     } catch (error) {
         console.error('Error opening gift:', error);
@@ -189,12 +201,24 @@ function closeModal() {
     commentInput.value = '';
 }
 
+// Update comment button state based on input
+function updateCommentButtonState() {
+    const hasText = commentInput.value.trim().length > 0;
+    if (hasText) {
+        addCommentBtn.disabled = false;
+        addCommentBtn.classList.remove('comment-btn-disabled');
+    } else {
+        addCommentBtn.disabled = true;
+        addCommentBtn.classList.add('comment-btn-disabled');
+    }
+}
+
 // Render comments
 function renderComments(comments) {
     commentsList.innerHTML = '';
 
     if (!comments || comments.length === 0) {
-        commentsList.innerHTML = '<p style="color: #999; font-size: 14px;">No comments yet. Be the first to comment!</p>';
+        commentsList.innerHTML = '<p class="no-comments-text">No comments yet. Be the first to share your thoughts!</p>';
         return;
     }
 
@@ -229,8 +253,12 @@ async function addComment() {
         // Reload comments
         const doc = await db.collection('gifts').doc(currentGiftId).get();
         const gift = doc.data();
-        renderComments(gift.comments || []);
+        const comments = gift.comments || [];
+        renderComments(comments);
+        document.getElementById('commentCount').textContent = `(${comments.length})`;
+
         commentInput.value = '';
+        updateCommentButtonState();
     } catch (error) {
         console.error('Error adding comment:', error);
         showError('Failed to add comment');
@@ -241,7 +269,9 @@ async function addComment() {
 async function deleteGift() {
     if (!currentGiftId) return;
 
-    if (!confirm('Are you sure you want to delete this gift?')) return;
+    // Create a better confirmation dialog
+    const confirmed = confirm('Are you sure you want to delete this gift from your wishlist? This action cannot be undone.');
+    if (!confirmed) return;
 
     try {
         showLoading();
@@ -261,6 +291,14 @@ async function deleteGift() {
 
         closeModal();
         hideLoading();
+
+        // Show success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'error-message';
+        successDiv.style.backgroundColor = '#10b981';
+        successDiv.textContent = 'Gift removed from your wishlist';
+        document.body.appendChild(successDiv);
+        setTimeout(() => successDiv.remove(), 3000);
     } catch (error) {
         console.error('Error deleting gift:', error);
         hideLoading();
@@ -370,6 +408,9 @@ deleteBtn.addEventListener('click', deleteGift);
 addCommentBtn.addEventListener('click', addComment);
 submitBtn.addEventListener('click', addNewGift);
 
+// Update comment button state on input change
+commentInput.addEventListener('input', updateCommentButtonState);
+
 // Close modals when clicking outside
 window.addEventListener('click', (e) => {
     if (e.target === modal) {
@@ -380,9 +421,9 @@ window.addEventListener('click', (e) => {
     }
 });
 
-// Allow Enter key to add comment
+// Allow Enter key to add comment (only if button is not disabled)
 commentInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !addCommentBtn.disabled) {
         addComment();
     }
 });

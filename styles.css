@@ -232,6 +232,8 @@ body {
     border-radius: 12px;
     overflow: hidden;
     animation: slideUp 0.3s;
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes slideUp {
@@ -243,6 +245,61 @@ body {
         transform: translateY(0);
         opacity: 1;
     }
+}
+
+/* Modal Header with Back and Delete Buttons */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+    background-color: #fafafa;
+    flex-shrink: 0;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ff2442;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    touch-action: manipulation;
+}
+
+.back-btn:active {
+    background-color: rgba(255, 36, 66, 0.1);
+    transform: scale(0.95);
+}
+
+.delete-icon-btn {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, background-color 0.2s;
+    touch-action: manipulation;
+}
+
+.delete-icon-btn:hover {
+    color: #ff2442;
+    background-color: rgba(255, 36, 66, 0.1);
+}
+
+.delete-icon-btn:active {
+    transform: scale(0.9);
 }
 
 .close-btn {
@@ -282,34 +339,12 @@ body {
         width: 100%;
     }
 
-    .modal-body {
-        flex-direction: column;
-        max-height: 100vh;
-        height: 100vh;
-        overflow: hidden;
-    }
-
-    .modal-image {
-        max-width: 100% !important;
-        max-height: 40vh;
-        min-height: 40vh;
-        flex-shrink: 0;
-    }
-
-    .modal-image img {
-        max-height: 40vh;
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
-        object-fit: contain;
-    }
-
-    .modal-info {
-        flex: 1;
-        padding: 15px;
-        overflow-y: auto;
-        background: white;
-        display: flex;
-        flex-direction: column;
-        -webkit-overflow-scrolling: touch;
+        height: 100%;
     }
 
     .modal-content {
@@ -320,6 +355,110 @@ body {
         max-width: 100vw;
         display: flex;
         flex-direction: column;
+        background-color: white;
+    }
+
+    .modal-header {
+        padding: 12px 16px;
+        padding-top: max(12px, env(safe-area-inset-top));
+        gap: 12px;
+    }
+
+    .back-btn {
+        font-size: 16px;
+        padding: 8px 12px;
+    }
+
+    .delete-icon-btn {
+        padding: 8px 12px;
+    }
+
+    .modal-body {
+        flex-direction: column;
+        overflow: hidden;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .modal-image {
+        max-width: 100% !important;
+        max-height: 35vh;
+        min-height: 35vh;
+        flex-shrink: 0;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+    }
+
+    .modal-image img {
+        max-height: 35vh;
+        width: 100%;
+        object-fit: contain;
+    }
+
+    .modal-info {
+        flex: 1;
+        padding: 0;
+        overflow-y: auto;
+        max-height: none;
+        background: white;
+        display: flex;
+        flex-direction: column;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-header-info {
+        padding: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .gift-title-section {
+        gap: 10px;
+    }
+
+    .avatar {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+    }
+
+    .gift-title {
+        font-size: 18px;
+    }
+
+    .modal-description {
+        padding: 16px;
+        margin-bottom: 0;
+    }
+
+    .modal-description h3 {
+        margin-bottom: 6px;
+    }
+
+    .modal-comments {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding: 16px;
+    }
+
+    .modal-comments h3 {
+        margin-bottom: 12px;
+    }
+
+    .comments-list {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 12px;
+    }
+
+    .comment-input-area {
+        flex-shrink: 0;
+        padding-top: 12px;
+        border-top: 1px solid #eee;
+        gap: 8px;
     }
 
     .add-modal-content {
@@ -331,7 +470,7 @@ body {
 
     .add-form {
         padding: 20px;
-        padding-top: 60px;
+        padding-top: max(60px, calc(20px + env(safe-area-inset-top)));
         height: 100vh;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
@@ -345,84 +484,97 @@ body {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         z-index: 1001;
     }
-
-    .modal-header-info {
-        flex-shrink: 0;
-    }
-
-    .modal-description {
-        flex-shrink: 0;
-        margin-bottom: 15px;
-    }
-
-    .modal-comments {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-    }
-
-    .comments-list {
-        flex: 1;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .comment-input-area {
-        flex-shrink: 0;
-        padding-top: 15px;
-        background: white;
-        position: sticky;
-        bottom: 0;
-    }
 }
 
 .modal-image {
-    flex: 1;
-    background-color: #000;
+    flex: 0 0 auto;
+    background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     max-width: 60%;
+    border-right: 1px solid #eee;
+    overflow: hidden;
+    min-height: 300px;
+    position: relative;
 }
 
 .modal-image img {
     max-width: 100%;
-    max-height: 90vh;
+    max-height: 500px;
     object-fit: contain;
+    padding: 20px;
 }
 
 .modal-info {
     flex: 1;
-    padding: 30px;
+    padding: 0;
     overflow-y: auto;
-    max-height: 90vh;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-header-info {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+    align-items: flex-start;
+    padding: 20px;
     padding-bottom: 15px;
     border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+}
+
+.gift-header {
+    width: 100%;
+}
+
+.gift-title-section {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ff2442, #ff6b7f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(255, 36, 66, 0.2);
+}
+
+.gift-name-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gift-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #ff2442;
+}
+
+.gift-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+    margin: 0;
+    word-break: break-word;
 }
 
 .user-info {
     display: flex;
     align-items: center;
-}
-
-.avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #ff2442;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    margin-right: 12px;
 }
 
 .username {
@@ -451,29 +603,64 @@ body {
 }
 
 .modal-description {
-    margin-bottom: 30px;
+    padding: 20px;
+    flex-shrink: 0;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-description h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
 }
 
 .modal-description p {
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1.6;
     color: #333;
+    margin: 0;
 }
 
 .modal-comments {
-    border-top: 1px solid #eee;
-    padding-top: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 20px;
 }
 
 .modal-comments h3 {
-    font-size: 18px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     margin-bottom: 15px;
+    flex-shrink: 0;
+}
+
+.comment-count {
+    color: #333;
+    font-weight: 600;
+    text-transform: none;
 }
 
 .comments-list {
-    margin-bottom: 20px;
-    max-height: 300px;
+    flex: 1;
     overflow-y: auto;
+    margin-bottom: 15px;
+    min-height: 0;
+}
+
+.no-comments-text {
+    color: #999;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+    margin: 0;
 }
 
 .comment {
@@ -481,60 +668,86 @@ body {
     border-bottom: 1px solid #f0f0f0;
 }
 
+.comment:last-child {
+    border-bottom: none;
+}
+
 .comment-user {
-    font-weight: 600;
-    font-size: 14px;
-    margin-bottom: 5px;
+    font-weight: 700;
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 4px;
 }
 
 .comment-text {
     font-size: 14px;
-    color: #666;
+    color: #555;
     line-height: 1.5;
+    margin-bottom: 4px;
+    word-wrap: break-word;
 }
 
 .comment-time {
     font-size: 12px;
     color: #999;
-    margin-top: 5px;
+    margin-top: 4px;
 }
 
 .comment-input-area {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
 }
 
 .comment-input-area input {
     flex: 1;
-    padding: 10px 15px;
+    padding: 10px 14px;
     border: 1px solid #ddd;
-    border-radius: 20px;
+    border-radius: 6px;
     font-size: 14px;
     outline: none;
+    background-color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .comment-input-area input:focus {
     border-color: #ff2442;
+    box-shadow: 0 0 0 3px rgba(255, 36, 66, 0.1);
+}
+
+.comment-input-area input::placeholder {
+    color: #999;
 }
 
 .comment-input-area button {
     background-color: #ff2442;
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
+    padding: 10px 18px;
+    border-radius: 6px;
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
+    transition: background-color 0.2s, transform 0.1s;
     touch-action: manipulation;
+    white-space: nowrap;
 }
 
-.comment-input-area button:hover {
+.comment-input-area button:not(:disabled):hover {
     background-color: #e61e3a;
 }
 
-.comment-input-area button:active {
+.comment-input-area button:not(:disabled):active {
     transform: scale(0.95);
+}
+
+.comment-input-area button:disabled,
+.comment-btn-disabled {
+    background-color: #ddd;
+    color: #999;
+    cursor: not-allowed;
 }
 
 /* Add Modal Styles */
