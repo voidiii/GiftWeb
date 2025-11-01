@@ -36,6 +36,7 @@ function loadGifts() {
     db.collection('gifts')
         .orderBy('createdAt', 'desc')
         .onSnapshot((snapshot) => {
+            console.log('Real-time update received! Total gifts:', snapshot.size);
             container.innerHTML = '';
 
             if (snapshot.empty) {
@@ -51,8 +52,9 @@ function loadGifts() {
             });
 
             hideLoading();
+            console.log('✅ Gifts loaded successfully');
         }, (error) => {
-            console.error('Error loading gifts:', error);
+            console.error('❌ Error loading gifts:', error);
             hideLoading();
             showError('Failed to load gifts. Please refresh the page.');
         });
@@ -285,10 +287,24 @@ async function addNewGift() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        closeAddModal();
+        // Reset button state first
         submitBtn.disabled = false;
         submitBtn.textContent = 'Add to Wishlist';
+
+        // Hide loading overlay
         hideLoading();
+
+        // Close modal and show success
+        closeAddModal();
+
+        // Optional: Show success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'error-message';
+        successDiv.style.backgroundColor = '#10b981';
+        successDiv.textContent = 'Gift added successfully!';
+        document.body.appendChild(successDiv);
+        setTimeout(() => successDiv.remove(), 3000);
+
     } catch (error) {
         console.error('Error adding gift:', error);
         submitBtn.disabled = false;
