@@ -37,13 +37,62 @@
         <div class="spinner"></div>
         <p>Loading...</p>
     </div>
-    <div class="header">
-        <h1>💝 Gift Wishlist</h1>
-        <button class="add-btn" id="addBtn">+ Add Gift</button>
+    <!-- Top Navigation Bar -->
+    <div class="top-nav">
+        <button class="nav-icon-left" id="menuBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="following">Following</button>
+            <button class="nav-tab" data-tab="discover">Discover</button>
+            <button class="nav-tab" data-tab="trending">Trending</button>
+        </div>
+
+        <button class="nav-icon-right" id="searchBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+        </button>
     </div>
 
     <div class="container" id="container">
         <!-- Gift cards will be dynamically added here -->
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="bottom-nav">
+        <button class="bottom-nav-icon" id="homeBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+        </button>
+        <button class="bottom-nav-icon" id="exploreBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+            </svg>
+        </button>
+        <button class="bottom-nav-center" id="addBtn">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+        </button>
+        <button class="bottom-nav-icon" id="messagesBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+        </button>
+        <button class="bottom-nav-icon" id="profileBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Modal for viewing/adding posts -->

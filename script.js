@@ -108,46 +108,39 @@ function renderGifts() {
     });
 }
 
-// Create a gift card element with ranking
+// Create a gift card element
 function createCard(gift, rank) {
     const card = document.createElement('div');
     card.className = 'card';
-    card.setAttribute('draggable', 'true');
     card.setAttribute('data-gift-id', gift.id);
 
     const commentCount = gift.comments ? gift.comments.length : 0;
+    const likeCount = Math.floor(Math.random() * 1000) + 100; // Mock like count
 
     card.innerHTML = `
-        <div class="rank-badge">#${rank}</div>
         <img src="${gift.imageUrl}" alt="${gift.description}" loading="lazy">
         <div class="card-info">
+            <div class="card-header">
+                <div class="card-avatar">🎁</div>
+                <span class="card-username">Gift Enthusiast</span>
+            </div>
             <div class="card-description">${gift.description}</div>
-            <div class="card-meta">
-                <span class="card-avatar">🎁</span>
-                <span>${commentCount} comments</span>
+            <div class="card-footer">
+                <div class="card-meta">
+                    <span>${commentCount} comments</span>
+                </div>
+                <div class="card-likes">
+                    <span class="heart-icon">❤️</span>
+                    <span>${likeCount}</span>
+                </div>
             </div>
         </div>
     `;
 
-    // Click to open modal (but not when dragging)
+    // Click to open modal
     card.addEventListener('click', (e) => {
-        if (!card.classList.contains('dragging')) {
-            openModal(gift.id);
-        }
+        openModal(gift.id);
     });
-
-    // Drag events
-    card.addEventListener('dragstart', handleDragStart);
-    card.addEventListener('dragend', handleDragEnd);
-    card.addEventListener('dragover', handleDragOver);
-    card.addEventListener('drop', handleDrop);
-    card.addEventListener('dragenter', handleDragEnter);
-    card.addEventListener('dragleave', handleDragLeave);
-
-    // Touch events for mobile
-    card.addEventListener('touchstart', handleTouchStart, { passive: false });
-    card.addEventListener('touchmove', handleTouchMove, { passive: false });
-    card.addEventListener('touchend', handleTouchEnd);
 
     return card;
 }
