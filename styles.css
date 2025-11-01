@@ -119,12 +119,44 @@ body {
     background-color: white;
     border-radius: 12px;
     overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: move;
+    transition: transform 0.3s, box-shadow 0.3s, opacity 0.3s;
     break-inside: avoid;
+    position: relative;
     /* Better touch response */
     -webkit-touch-callout: none;
-    touch-action: manipulation;
+    touch-action: none;
+}
+
+.card.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.card.drag-over {
+    border: 2px dashed #ff2442;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(255, 36, 66, 0.3);
+}
+
+.rank-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: linear-gradient(135deg, #ff2442, #ff6b7f);
+    color: white;
+    font-weight: 700;
+    font-size: 18px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    min-width: 45px;
+    text-align: center;
+}
+
+.rank-badge:first-child {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
 }
 
 .card:hover {

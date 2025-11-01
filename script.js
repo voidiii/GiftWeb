@@ -1,5 +1,7 @@
 // Gift posts storage
 let currentGiftId = null;
+let giftsArray = []; // Store gifts for drag-and-drop
+let draggedElement = null;
 
 // DOM elements
 const container = document.getElementById('container');
@@ -44,24 +46,26 @@ function loadGifts() {
                 return;
             }
 
-            // Convert to array and sort by createdAt
-            const gifts = [];
+            // Convert to array
+            giftsArray = [];
             snapshot.forEach((doc) => {
-                gifts.push({ id: doc.id, ...doc.data() });
+                giftsArray.push({ id: doc.id, ...doc.data() });
             });
 
-            // Sort by createdAt (newest first)
-            gifts.sort((a, b) => {
+            // Sort by priority (lower number = higher priority), then by createdAt
+            giftsArray.sort((a, b) => {
+                const priorityA = a.priority ?? 999999;
+                const priorityB = b.priority ?? 999999;
+                if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                }
                 const timeA = a.createdAt?.toMillis() || 0;
                 const timeB = b.createdAt?.toMillis() || 0;
                 return timeB - timeA;
             });
 
-            // Render sorted gifts
-            gifts.forEach(gift => {
-                const card = createCard(gift);
-                container.appendChild(card);
-            });
+            // Render sorted gifts with ranking
+            renderGifts();
 
             hideLoading();
             console.log('✅ Gifts loaded successfully');
@@ -94,15 +98,27 @@ function showError(message) {
     }, 5000);
 }
 
-// Create a gift card element
-function createCard(gift) {
+// Render gifts with drag-and-drop
+function renderGifts() {
+    container.innerHTML = '';
+
+    giftsArray.forEach((gift, index) => {
+        const card = createCard(gift, index + 1);
+        container.appendChild(card);
+    });
+}
+
+// Create a gift card element with ranking
+function createCard(gift, rank) {
     const card = document.createElement('div');
     card.className = 'card';
-    card.onclick = () => openModal(gift.id);
+    card.setAttribute('draggable', 'true');
+    card.setAttribute('data-gift-id', gift.id);
 
     const commentCount = gift.comments ? gift.comments.length : 0;
 
     card.innerHTML = `
+        <div class="rank-badge">#${rank}</div>
         <img src="${gift.imageUrl}" alt="${gift.description}" loading="lazy">
         <div class="card-info">
             <div class="card-description">${gift.description}</div>
@@ -112,6 +128,26 @@ function createCard(gift) {
             </div>
         </div>
     `;
+
+    // Click to open modal (but not when dragging)
+    card.addEventListener('click', (e) => {
+        if (!card.classList.contains('dragging')) {
+            openModal(gift.id);
+        }
+    });
+
+    // Drag events
+    card.addEventListener('dragstart', handleDragStart);
+    card.addEventListener('dragend', handleDragEnd);
+    card.addEventListener('dragover', handleDragOver);
+    card.addEventListener('drop', handleDrop);
+    card.addEventListener('dragenter', handleDragEnter);
+    card.addEventListener('dragleave', handleDragLeave);
+
+    // Touch events for mobile
+    card.addEventListener('touchstart', handleTouchStart, { passive: false });
+    card.addEventListener('touchmove', handleTouchMove, { passive: false });
+    card.addEventListener('touchend', handleTouchEnd);
 
     return card;
 }
@@ -350,6 +386,156 @@ commentInput.addEventListener('keypress', (e) => {
         addComment();
     }
 });
+
+// Drag and Drop Handlers
+function handleDragStart(e) {
+    draggedElement = e.currentTarget;
+    e.currentTarget.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
+}
+
+function handleDragEnd(e) {
+    e.currentTarget.classList.remove('dragging');
+
+    // Remove all drag-over classes
+    document.querySelectorAll('.card').forEach(card => {
+        card.classList.remove('drag-over');
+    });
+
+    draggedElement = null;
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) {
+    if (e.currentTarget !== draggedElement) {
+        e.currentTarget.classList.add('drag-over');
+    }
+}
+
+function handleDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+async function handleDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+    e.preventDefault();
+
+    const dropTarget = e.currentTarget;
+    dropTarget.classList.remove('drag-over');
+
+    if (draggedElement && draggedElement !== dropTarget) {
+        // Get IDs
+        const draggedId = draggedElement.getAttribute('data-gift-id');
+        const targetId = dropTarget.getAttribute('data-gift-id');
+
+        // Find indices
+        const draggedIndex = giftsArray.findIndex(g => g.id === draggedId);
+        const targetIndex = giftsArray.findIndex(g => g.id === targetId);
+
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+            // Reorder array
+            const [removed] = giftsArray.splice(draggedIndex, 1);
+            giftsArray.splice(targetIndex, 0, removed);
+
+            // Save new order to Firestore
+            await saveGiftOrder();
+
+            // Re-render
+            renderGifts();
+        }
+    }
+
+    return false;
+}
+
+// Touch event handlers for mobile
+let touchStartY = 0;
+let touchElement = null;
+
+function handleTouchStart(e) {
+    touchElement = e.currentTarget;
+    touchStartY = e.touches[0].clientY;
+    touchElement.classList.add('dragging');
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+
+    if (!touchElement) return;
+
+    const touchY = e.touches[0].clientY;
+    const currentElement = document.elementFromPoint(e.touches[0].clientX, touchY);
+
+    // Remove all drag-over classes
+    document.querySelectorAll('.card').forEach(card => {
+        card.classList.remove('drag-over');
+    });
+
+    // Add drag-over to element under touch
+    if (currentElement && currentElement.classList.contains('card') && currentElement !== touchElement) {
+        currentElement.classList.add('drag-over');
+    }
+}
+
+async function handleTouchEnd(e) {
+    if (!touchElement) return;
+
+    const touchY = e.changedTouches[0].clientY;
+    const targetElement = document.elementFromPoint(e.changedTouches[0].clientX, touchY);
+
+    touchElement.classList.remove('dragging');
+
+    // Remove all drag-over classes
+    document.querySelectorAll('.card').forEach(card => {
+        card.classList.remove('drag-over');
+    });
+
+    if (targetElement && targetElement.classList.contains('card') && targetElement !== touchElement) {
+        const draggedId = touchElement.getAttribute('data-gift-id');
+        const targetId = targetElement.getAttribute('data-gift-id');
+
+        const draggedIndex = giftsArray.findIndex(g => g.id === draggedId);
+        const targetIndex = giftsArray.findIndex(g => g.id === targetId);
+
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+            const [removed] = giftsArray.splice(draggedIndex, 1);
+            giftsArray.splice(targetIndex, 0, removed);
+
+            await saveGiftOrder();
+            renderGifts();
+        }
+    }
+
+    touchElement = null;
+}
+
+// Save gift order to Firestore
+async function saveGiftOrder() {
+    try {
+        const batch = db.batch();
+
+        giftsArray.forEach((gift, index) => {
+            const giftRef = db.collection('gifts').doc(gift.id);
+            batch.update(giftRef, { priority: index });
+        });
+
+        await batch.commit();
+        console.log('✅ Gift order saved');
+    } catch (error) {
+        console.error('Error saving gift order:', error);
+        showError('Failed to save order');
+    }
+}
 
 // Initialize app
 loadGifts();
