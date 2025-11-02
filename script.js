@@ -113,14 +113,23 @@ function renderGifts() {
 // Initialize SortableJS for drag-and-drop reordering
 function initializeSortable() {
     Sortable.create(container, {
-        animation: 150,
+        animation: 100,
+        animationDuration: 100,
         ghostClass: 'sortable-ghost',
         dragClass: 'sortable-drag',
-        handle: '.card',
-        delay: 100,
-        delayOnTouchOnly: true,
-        touchStartThreshold: 5,
-        forceFallback: false,
+        fallbackClass: 'sortable-fallback',
+        delay: 0,
+        delayOnTouchOnly: false,
+        touchStartThreshold: 0,
+        forceFallback: true,
+        fallbackOnBody: true,
+        fallbackTolerance: 3,
+        invertSwap: false,
+        swap: true,
+        swapClass: 'sortable-swap',
+        onMove: function(evt) {
+            return true; // Allow movement
+        },
         onEnd: async function(evt) {
             // Reorder the giftsArray based on new DOM order
             const newOrder = Array.from(container.querySelectorAll('.card')).map(card => {

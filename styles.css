@@ -136,13 +136,26 @@ body {
 .card.sortable-ghost {
     opacity: 0.4;
     background-color: #f9f9f9;
+    transform: scale(0.95);
 }
 
 .card.sortable-drag {
-    opacity: 0.9;
-    transform: scale(1.02);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
+    opacity: 0.95;
+    transform: scale(1.05);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    z-index: 10000;
+    transition: none;
+}
+
+.card.sortable-fallback {
+    opacity: 0.95;
+    transform: scale(1.05);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    z-index: 10000;
+}
+
+.card.sortable-swap {
+    transition: transform 0.1s ease, opacity 0.1s ease;
 }
 
 /* Legacy dragging states (for compatibility) */
