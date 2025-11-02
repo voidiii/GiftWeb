@@ -1,8 +1,6 @@
 // Gift posts storage
 let currentGiftId = null;
-let giftsArray = []; // Store gifts for drag-and-drop
-let draggedElement = null;
-let draggedIndex = null;
+let giftsArray = []; // Store gifts for drag-and-drop (managed by SortableJS)
 
 // DOM elements
 const container = document.getElementById('container');
@@ -107,13 +105,41 @@ function renderGifts() {
         const card = createCard(gift, index + 1);
         container.appendChild(card);
     });
+
+    // Initialize SortableJS for drag-and-drop
+    initializeSortable();
+}
+
+// Initialize SortableJS for drag-and-drop reordering
+function initializeSortable() {
+    Sortable.create(container, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        dragClass: 'sortable-drag',
+        handle: '.card',
+        delay: 100,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5,
+        forceFallback: false,
+        onEnd: async function(evt) {
+            // Reorder the giftsArray based on new DOM order
+            const newOrder = Array.from(container.querySelectorAll('.card')).map(card => {
+                const giftId = card.getAttribute('data-gift-id');
+                return giftsArray.find(g => g.id === giftId);
+            });
+
+            giftsArray = newOrder;
+
+            // Save new order to Firestore
+            await saveGiftOrder();
+        }
+    });
 }
 
 // Create a gift card element
 function createCard(gift, rank) {
     const card = document.createElement('div');
     card.className = 'card';
-    card.setAttribute('draggable', 'true');
     card.setAttribute('data-gift-id', gift.id);
 
     const commentCount = gift.comments ? gift.comments.length : 0;
@@ -139,25 +165,13 @@ function createCard(gift, rank) {
         </div>
     `;
 
-    // Click to open modal (but not when dragging)
+    // Click to open modal
     card.addEventListener('click', (e) => {
-        if (!isDraggingCard && !card.classList.contains('dragging')) {
+        // Check if click is on a card element (not during drag)
+        if (!card.classList.contains('sortable-drag')) {
             openModal(gift.id);
         }
     });
-
-    // Drag events for desktop
-    card.addEventListener('dragstart', handleDragStart);
-    card.addEventListener('dragend', handleDragEnd);
-    card.addEventListener('dragover', handleDragOver);
-    card.addEventListener('drop', handleDrop);
-    card.addEventListener('dragenter', handleDragEnter);
-    card.addEventListener('dragleave', handleDragLeave);
-
-    // Touch events for mobile
-    card.addEventListener('touchstart', handleTouchStart, { passive: false });
-    card.addEventListener('touchmove', handleTouchMove, { passive: false });
-    card.addEventListener('touchend', handleTouchEnd);
 
     return card;
 }
@@ -437,201 +451,6 @@ commentInput.addEventListener('keypress', (e) => {
         addComment();
     }
 });
-
-// iOS-style Drag and Drop Handlers
-function handleDragStart(e) {
-    draggedElement = e.currentTarget;
-    const draggedId = draggedElement.getAttribute('data-gift-id');
-    draggedIndex = giftsArray.findIndex(g => g.id === draggedId);
-
-    // Create custom drag image
-    const dragImage = new Image();
-    dragImage.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg"%3E%3C/svg%3E';
-    e.dataTransfer.setDragImage(dragImage, 0, 0);
-
-    e.currentTransfer = {
-        effectAllowed: 'move',
-        setData: () => {}
-    };
-
-    // Scale down the dragged card immediately
-    draggedElement.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-}
-
-function handleDragEnd(e) {
-    const allCards = document.querySelectorAll('.card');
-    allCards.forEach(card => {
-        card.classList.remove('dragging', 'swap-move', 'drag-over');
-    });
-    draggedElement = null;
-    draggedIndex = null;
-}
-
-function handleDragOver(e) {
-    if (e.preventDefault) {
-        e.preventDefault();
-    }
-    e.dataTransfer.dropEffect = 'move';
-
-    if (!draggedElement) return false;
-
-    const targetCard = e.currentTarget;
-    if (targetCard === draggedElement) return false;
-
-    const targetId = targetCard.getAttribute('data-gift-id');
-    const targetIndex = giftsArray.findIndex(g => g.id === targetId);
-
-    if (targetIndex !== -1 && draggedIndex !== null) {
-        // Perform swap animation in the array
-        const [removed] = giftsArray.splice(draggedIndex, 1);
-        giftsArray.splice(targetIndex, 0, removed);
-        draggedIndex = targetIndex;
-
-        // Re-render with smooth animations
-        renderGiftsWithAnimation();
-    }
-
-    return false;
-}
-
-function handleDragEnter(e) {
-    if (e.currentTarget === draggedElement) return;
-    e.currentTarget.classList.add('swap-move');
-}
-
-function handleDragLeave(e) {
-    e.currentTarget.classList.remove('swap-move');
-}
-
-async function handleDrop(e) {
-    if (e.stopPropagation) {
-        e.stopPropagation();
-    }
-    e.preventDefault();
-
-    // Save the new order to Firestore
-    if (draggedIndex !== null) {
-        await saveGiftOrder();
-    }
-
-    // Clean up
-    const allCards = document.querySelectorAll('.card');
-    allCards.forEach(card => {
-        card.classList.remove('dragging', 'swap-move', 'drag-over');
-    });
-
-    return false;
-}
-
-// Render with smooth animations for iOS-style reordering
-function renderGiftsWithAnimation() {
-    container.innerHTML = '';
-
-    giftsArray.forEach((gift, index) => {
-        const card = createCard(gift, index + 1);
-        container.appendChild(card);
-    });
-}
-
-// Touch event handlers for mobile - iOS-style reordering
-let touchStartY = 0;
-let touchStartX = 0;
-let touchElement = null;
-let touchDraggedIndex = null;
-let isDraggingCard = false;
-let dragStartTime = 0;
-
-function handleTouchStart(e) {
-    touchElement = e.currentTarget;
-    touchStartY = e.touches[0].clientY;
-    touchStartX = e.touches[0].clientX;
-    dragStartTime = Date.now();
-    isDraggingCard = false;
-
-    const touchId = touchElement.getAttribute('data-gift-id');
-    touchDraggedIndex = giftsArray.findIndex(g => g.id === touchId);
-}
-
-function handleTouchMove(e) {
-    if (!touchElement) return;
-
-    const touchY = e.touches[0].clientY;
-    const touchX = e.touches[0].clientX;
-
-    // Calculate distance moved
-    const distanceY = Math.abs(touchY - touchStartY);
-    const distanceX = Math.abs(touchX - touchStartX);
-    const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-
-    // Only activate dragging if user has moved more than 10px
-    if (distance > 10 && !isDraggingCard) {
-        isDraggingCard = true;
-        e.preventDefault();
-        touchElement.classList.add('dragging');
-    }
-
-    if (!isDraggingCard) return;
-
-    e.preventDefault();
-
-    const currentElement = document.elementFromPoint(touchX, touchY);
-
-    // Remove all swap-move classes
-    document.querySelectorAll('.card').forEach(card => {
-        if (card !== touchElement) {
-            card.classList.remove('swap-move');
-        }
-    });
-
-    // Add swap-move to element under touch (but not the dragged card itself)
-    if (currentElement && currentElement.classList.contains('card') && currentElement !== touchElement) {
-        const targetId = currentElement.getAttribute('data-gift-id');
-        const targetIndex = giftsArray.findIndex(g => g.id === targetId);
-
-        // Only swap if target is different from current position
-        if (targetIndex !== -1 && touchDraggedIndex !== null && targetIndex !== touchDraggedIndex) {
-            // Perform swap in array
-            const [removed] = giftsArray.splice(touchDraggedIndex, 1);
-            giftsArray.splice(targetIndex, 0, removed);
-            touchDraggedIndex = targetIndex;
-
-            // Re-render with smooth animations
-            renderGiftsWithAnimation();
-
-            // Re-apply dragging class to keep the dragged card visible
-            const updatedDraggedCard = document.querySelector(`[data-gift-id="${removed.id}"]`);
-            if (updatedDraggedCard) {
-                updatedDraggedCard.classList.add('dragging');
-                touchElement = updatedDraggedCard;
-            }
-        }
-
-        currentElement.classList.add('swap-move');
-    }
-}
-
-async function handleTouchEnd(e) {
-    if (!touchElement) return;
-
-    const wasCardDragged = isDraggingCard;
-
-    touchElement.classList.remove('dragging');
-
-    // Remove all swap-move classes
-    document.querySelectorAll('.card').forEach(card => {
-        card.classList.remove('swap-move');
-    });
-
-    // Save the new order to Firestore if card was actually dragged
-    if (wasCardDragged && touchDraggedIndex !== null) {
-        await saveGiftOrder();
-    }
-
-    touchElement = null;
-    touchDraggedIndex = null;
-    isDraggingCard = false;
-}
 
 // Save gift order to Firestore
 async function saveGiftOrder() {

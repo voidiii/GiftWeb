@@ -124,6 +124,7 @@ body {
     touch-action: none;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
+    user-select: none;
 }
 
 .card:active {
@@ -131,6 +132,20 @@ body {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
+/* SortableJS states */
+.card.sortable-ghost {
+    opacity: 0.4;
+    background-color: #f9f9f9;
+}
+
+.card.sortable-drag {
+    opacity: 0.9;
+    transform: scale(1.02);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+}
+
+/* Legacy dragging states (for compatibility) */
 .card.dragging {
     opacity: 0.7;
     transform: scale(0.95);
