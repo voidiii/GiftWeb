@@ -97,6 +97,9 @@ function showError(message) {
     }, 5000);
 }
 
+// Store reference to Sortable instance
+let sortableInstance = null;
+
 // Render gifts with drag-and-drop
 function renderGifts() {
     container.innerHTML = '';
@@ -106,13 +109,20 @@ function renderGifts() {
         container.appendChild(card);
     });
 
-    // Initialize SortableJS for drag-and-drop
+    // Reinitialize SortableJS for drag-and-drop
     initializeSortable();
 }
 
 // Initialize SortableJS for drag-and-drop reordering
 function initializeSortable() {
-    Sortable.create(container, {
+    // Destroy existing Sortable instance if it exists
+    if (sortableInstance) {
+        sortableInstance.destroy();
+        sortableInstance = null;
+    }
+
+    // Create new Sortable instance
+    sortableInstance = Sortable.create(container, {
         animation: 100,
         animationDuration: 100,
         ghostClass: 'sortable-ghost',
@@ -131,16 +141,19 @@ function initializeSortable() {
             return true; // Allow movement
         },
         onEnd: async function(evt) {
-            // Reorder the giftsArray based on new DOM order
-            const newOrder = Array.from(container.querySelectorAll('.card')).map(card => {
-                const giftId = card.getAttribute('data-gift-id');
-                return giftsArray.find(g => g.id === giftId);
-            });
+            // Only proceed if items were actually reordered
+            if (evt.oldIndex !== evt.newIndex) {
+                // Reorder the giftsArray based on new DOM order
+                const newOrder = Array.from(container.querySelectorAll('.card')).map(card => {
+                    const giftId = card.getAttribute('data-gift-id');
+                    return giftsArray.find(g => g.id === giftId);
+                });
 
-            giftsArray = newOrder;
+                giftsArray = newOrder;
 
-            // Save new order to Firestore
-            await saveGiftOrder();
+                // Save new order to Firestore
+                await saveGiftOrder();
+            }
         }
     });
 }
