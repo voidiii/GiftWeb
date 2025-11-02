@@ -112,6 +112,7 @@ function renderGifts() {
 function createCard(gift, rank) {
     const card = document.createElement('div');
     card.className = 'card';
+    card.setAttribute('draggable', 'true');
     card.setAttribute('data-gift-id', gift.id);
 
     const commentCount = gift.comments ? gift.comments.length : 0;
@@ -137,10 +138,25 @@ function createCard(gift, rank) {
         </div>
     `;
 
-    // Click to open modal
+    // Click to open modal (but not when dragging)
     card.addEventListener('click', (e) => {
-        openModal(gift.id);
+        if (!card.classList.contains('dragging')) {
+            openModal(gift.id);
+        }
     });
+
+    // Drag events for desktop
+    card.addEventListener('dragstart', handleDragStart);
+    card.addEventListener('dragend', handleDragEnd);
+    card.addEventListener('dragover', handleDragOver);
+    card.addEventListener('drop', handleDrop);
+    card.addEventListener('dragenter', handleDragEnter);
+    card.addEventListener('dragleave', handleDragLeave);
+
+    // Touch events for mobile
+    card.addEventListener('touchstart', handleTouchStart, { passive: false });
+    card.addEventListener('touchmove', handleTouchMove, { passive: false });
+    card.addEventListener('touchend', handleTouchEnd);
 
     return card;
 }
