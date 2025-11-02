@@ -579,14 +579,17 @@ function handleTouchMove(e) {
 
     // Remove all swap-move classes
     document.querySelectorAll('.card').forEach(card => {
-        card.classList.remove('swap-move');
+        if (card !== touchElement) {
+            card.classList.remove('swap-move');
+        }
     });
 
-    // Add swap-move to element under touch
+    // Add swap-move to element under touch (but not the dragged card itself)
     if (currentElement && currentElement.classList.contains('card') && currentElement !== touchElement) {
         const targetId = currentElement.getAttribute('data-gift-id');
         const targetIndex = giftsArray.findIndex(g => g.id === targetId);
 
+        // Only swap if target is different from current position
         if (targetIndex !== -1 && touchDraggedIndex !== null && targetIndex !== touchDraggedIndex) {
             // Perform swap in array
             const [removed] = giftsArray.splice(touchDraggedIndex, 1);
@@ -595,6 +598,13 @@ function handleTouchMove(e) {
 
             // Re-render with smooth animations
             renderGiftsWithAnimation();
+
+            // Re-apply dragging class to keep the dragged card visible
+            const updatedDraggedCard = document.querySelector(`[data-gift-id="${removed.id}"]`);
+            if (updatedDraggedCard) {
+                updatedDraggedCard.classList.add('dragging');
+                touchElement = updatedDraggedCard;
+            }
         }
 
         currentElement.classList.add('swap-move');

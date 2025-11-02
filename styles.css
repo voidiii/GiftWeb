@@ -132,11 +132,10 @@ body {
 }
 
 .card.dragging {
-    opacity: 0;
-    transform: scale(1);
-    position: absolute;
+    opacity: 0.7;
+    transform: scale(0.95);
     z-index: 1000;
-    pointer-events: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .card.drag-over {
