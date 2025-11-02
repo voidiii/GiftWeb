@@ -2,6 +2,7 @@
 let currentGiftId = null;
 let giftsArray = []; // Store gifts for drag-and-drop
 let draggedElement = null;
+let draggedIndex = null;
 
 // DOM elements
 const container = document.getElementById('container');
@@ -437,23 +438,34 @@ commentInput.addEventListener('keypress', (e) => {
     }
 });
 
-// Drag and Drop Handlers
+// iOS-style Drag and Drop Handlers
 function handleDragStart(e) {
     draggedElement = e.currentTarget;
-    e.currentTarget.classList.add('dragging');
+    const draggedId = draggedElement.getAttribute('data-gift-id');
+    draggedIndex = giftsArray.findIndex(g => g.id === draggedId);
+
+    // Create custom drag image
+    const dragImage = new Image();
+    dragImage.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg"%3E%3C/svg%3E';
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
+
+    e.currentTransfer = {
+        effectAllowed: 'move',
+        setData: () => {}
+    };
+
+    // Scale down the dragged card immediately
+    draggedElement.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', e.currentTarget.innerHTML);
 }
 
 function handleDragEnd(e) {
-    e.currentTarget.classList.remove('dragging');
-
-    // Remove all drag-over classes
-    document.querySelectorAll('.card').forEach(card => {
-        card.classList.remove('drag-over');
+    const allCards = document.querySelectorAll('.card');
+    allCards.forEach(card => {
+        card.classList.remove('dragging', 'swap-move', 'drag-over');
     });
-
     draggedElement = null;
+    draggedIndex = null;
 }
 
 function handleDragOver(e) {
@@ -461,17 +473,35 @@ function handleDragOver(e) {
         e.preventDefault();
     }
     e.dataTransfer.dropEffect = 'move';
+
+    if (!draggedElement) return false;
+
+    const targetCard = e.currentTarget;
+    if (targetCard === draggedElement) return false;
+
+    const targetId = targetCard.getAttribute('data-gift-id');
+    const targetIndex = giftsArray.findIndex(g => g.id === targetId);
+
+    if (targetIndex !== -1 && draggedIndex !== null) {
+        // Perform swap animation in the array
+        const [removed] = giftsArray.splice(draggedIndex, 1);
+        giftsArray.splice(targetIndex, 0, removed);
+        draggedIndex = targetIndex;
+
+        // Re-render with smooth animations
+        renderGiftsWithAnimation();
+    }
+
     return false;
 }
 
 function handleDragEnter(e) {
-    if (e.currentTarget !== draggedElement) {
-        e.currentTarget.classList.add('drag-over');
-    }
+    if (e.currentTarget === draggedElement) return;
+    e.currentTarget.classList.add('swap-move');
 }
 
 function handleDragLeave(e) {
-    e.currentTarget.classList.remove('drag-over');
+    e.currentTarget.classList.remove('swap-move');
 }
 
 async function handleDrop(e) {
@@ -480,40 +510,40 @@ async function handleDrop(e) {
     }
     e.preventDefault();
 
-    const dropTarget = e.currentTarget;
-    dropTarget.classList.remove('drag-over');
-
-    if (draggedElement && draggedElement !== dropTarget) {
-        // Get IDs
-        const draggedId = draggedElement.getAttribute('data-gift-id');
-        const targetId = dropTarget.getAttribute('data-gift-id');
-
-        // Find indices
-        const draggedIndex = giftsArray.findIndex(g => g.id === draggedId);
-        const targetIndex = giftsArray.findIndex(g => g.id === targetId);
-
-        if (draggedIndex !== -1 && targetIndex !== -1) {
-            // Reorder array
-            const [removed] = giftsArray.splice(draggedIndex, 1);
-            giftsArray.splice(targetIndex, 0, removed);
-
-            // Save new order to Firestore
-            await saveGiftOrder();
-
-            // Re-render
-            renderGifts();
-        }
+    // Save the new order to Firestore
+    if (draggedIndex !== null) {
+        await saveGiftOrder();
     }
+
+    // Clean up
+    const allCards = document.querySelectorAll('.card');
+    allCards.forEach(card => {
+        card.classList.remove('dragging', 'swap-move', 'drag-over');
+    });
 
     return false;
 }
 
-// Touch event handlers for mobile
+// Render with smooth animations for iOS-style reordering
+function renderGiftsWithAnimation() {
+    container.innerHTML = '';
+
+    giftsArray.forEach((gift, index) => {
+        const card = createCard(gift, index + 1);
+        container.appendChild(card);
+    });
+}
+
+// Touch event handlers for mobile - iOS-style reordering
 let touchStartY = 0;
 let touchElement = null;
+let touchDraggedIndex = null;
 
 function handleTouchStart(e) {
     touchElement = e.currentTarget;
+    const touchId = touchElement.getAttribute('data-gift-id');
+    touchDraggedIndex = giftsArray.findIndex(g => g.id === touchId);
+
     touchStartY = e.touches[0].clientY;
     touchElement.classList.add('dragging');
 }
@@ -526,47 +556,47 @@ function handleTouchMove(e) {
     const touchY = e.touches[0].clientY;
     const currentElement = document.elementFromPoint(e.touches[0].clientX, touchY);
 
-    // Remove all drag-over classes
+    // Remove all swap-move classes
     document.querySelectorAll('.card').forEach(card => {
-        card.classList.remove('drag-over');
+        card.classList.remove('swap-move');
     });
 
-    // Add drag-over to element under touch
+    // Add swap-move to element under touch
     if (currentElement && currentElement.classList.contains('card') && currentElement !== touchElement) {
-        currentElement.classList.add('drag-over');
+        const targetId = currentElement.getAttribute('data-gift-id');
+        const targetIndex = giftsArray.findIndex(g => g.id === targetId);
+
+        if (targetIndex !== -1 && touchDraggedIndex !== null && targetIndex !== touchDraggedIndex) {
+            // Perform swap in array
+            const [removed] = giftsArray.splice(touchDraggedIndex, 1);
+            giftsArray.splice(targetIndex, 0, removed);
+            touchDraggedIndex = targetIndex;
+
+            // Re-render with smooth animations
+            renderGiftsWithAnimation();
+        }
+
+        currentElement.classList.add('swap-move');
     }
 }
 
 async function handleTouchEnd(e) {
     if (!touchElement) return;
 
-    const touchY = e.changedTouches[0].clientY;
-    const targetElement = document.elementFromPoint(e.changedTouches[0].clientX, touchY);
-
     touchElement.classList.remove('dragging');
 
-    // Remove all drag-over classes
+    // Remove all swap-move classes
     document.querySelectorAll('.card').forEach(card => {
-        card.classList.remove('drag-over');
+        card.classList.remove('swap-move');
     });
 
-    if (targetElement && targetElement.classList.contains('card') && targetElement !== touchElement) {
-        const draggedId = touchElement.getAttribute('data-gift-id');
-        const targetId = targetElement.getAttribute('data-gift-id');
-
-        const draggedIndex = giftsArray.findIndex(g => g.id === draggedId);
-        const targetIndex = giftsArray.findIndex(g => g.id === targetId);
-
-        if (draggedIndex !== -1 && targetIndex !== -1) {
-            const [removed] = giftsArray.splice(draggedIndex, 1);
-            giftsArray.splice(targetIndex, 0, removed);
-
-            await saveGiftOrder();
-            renderGifts();
-        }
+    // Save the new order to Firestore
+    if (touchDraggedIndex !== null) {
+        await saveGiftOrder();
     }
 
     touchElement = null;
+    touchDraggedIndex = null;
 }
 
 // Save gift order to Firestore
