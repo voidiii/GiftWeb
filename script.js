@@ -141,7 +141,7 @@ function createCard(gift, rank) {
 
     // Click to open modal (but not when dragging)
     card.addEventListener('click', (e) => {
-        if (!card.classList.contains('dragging')) {
+        if (!isDraggingCard && !card.classList.contains('dragging')) {
             openModal(gift.id);
         }
     });
@@ -536,25 +536,46 @@ function renderGiftsWithAnimation() {
 
 // Touch event handlers for mobile - iOS-style reordering
 let touchStartY = 0;
+let touchStartX = 0;
 let touchElement = null;
 let touchDraggedIndex = null;
+let isDraggingCard = false;
+let dragStartTime = 0;
 
 function handleTouchStart(e) {
     touchElement = e.currentTarget;
+    touchStartY = e.touches[0].clientY;
+    touchStartX = e.touches[0].clientX;
+    dragStartTime = Date.now();
+    isDraggingCard = false;
+
     const touchId = touchElement.getAttribute('data-gift-id');
     touchDraggedIndex = giftsArray.findIndex(g => g.id === touchId);
-
-    touchStartY = e.touches[0].clientY;
-    touchElement.classList.add('dragging');
 }
 
 function handleTouchMove(e) {
-    e.preventDefault();
-
     if (!touchElement) return;
 
     const touchY = e.touches[0].clientY;
-    const currentElement = document.elementFromPoint(e.touches[0].clientX, touchY);
+    const touchX = e.touches[0].clientX;
+
+    // Calculate distance moved
+    const distanceY = Math.abs(touchY - touchStartY);
+    const distanceX = Math.abs(touchX - touchStartX);
+    const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+    // Only activate dragging if user has moved more than 10px
+    if (distance > 10 && !isDraggingCard) {
+        isDraggingCard = true;
+        e.preventDefault();
+        touchElement.classList.add('dragging');
+    }
+
+    if (!isDraggingCard) return;
+
+    e.preventDefault();
+
+    const currentElement = document.elementFromPoint(touchX, touchY);
 
     // Remove all swap-move classes
     document.querySelectorAll('.card').forEach(card => {
@@ -583,6 +604,8 @@ function handleTouchMove(e) {
 async function handleTouchEnd(e) {
     if (!touchElement) return;
 
+    const wasCardDragged = isDraggingCard;
+
     touchElement.classList.remove('dragging');
 
     // Remove all swap-move classes
@@ -590,13 +613,14 @@ async function handleTouchEnd(e) {
         card.classList.remove('swap-move');
     });
 
-    // Save the new order to Firestore
-    if (touchDraggedIndex !== null) {
+    // Save the new order to Firestore if card was actually dragged
+    if (wasCardDragged && touchDraggedIndex !== null) {
         await saveGiftOrder();
     }
 
     touchElement = null;
     touchDraggedIndex = null;
+    isDraggingCard = false;
 }
 
 // Save gift order to Firestore
